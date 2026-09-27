@@ -1,5 +1,5 @@
 // Faith Craft Math service worker: caches every file (including the voice recordings) so the game works fully offline.
-const VERSION = 'm1-pages-p1-cd6608da31';
+const VERSION = 'm1-pages-p1-54880552ea';
 const CACHE = 'fcmath-' + VERSION;
 const AUDIO_CACHE = 'fcmath-audio'; // voice clips are named by content, so they survive updates
 const ASSETS = [

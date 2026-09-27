@@ -29,21 +29,24 @@ export function deleteProfile(id) {
   saveProfiles();
 }
 export function setActive(id) { profiles.active = id; saveProfiles(); }
-const KEY = () => `fcmath.p.${profiles.active || 'none'}.state`, WKEY = () => `fcmath.p.${profiles.active || 'none'}.world`;
+// Saves always go to the player whose data is loaded in memory (owner), even after the active player is switched
+// and before the page reloads, so one player's progress can never overwrite another's.
+let owner = profiles.active;
+const KEY = () => `fcmath.p.${owner || 'none'}.state`, WKEY = () => `fcmath.p.${owner || 'none'}.world`;
 export const DEFAULT_SETTINGS = { name: 'Player 1', music: true, musicVol: 0.4, bob: true, calm: false, sound: true, rate: 0.9, autoRead: true, sens: 1, font: 'lexend', textSize: 1, spacing: true, cream: true, autoJump: true, view: 'back', zoom: 'normal',
   schoolOrder: true, unitOverride: -1, lockLevel: false, factsTimer: false, numpad: true };
 export const freshMath = () => ({ levels: null, placed: false, placedHow: null, placedAt: null, placement: null, recent: {}, skills: {}, facts: {}, hist: [], answered: 0, correct: 0, bestStreak: 0, sprint: null });
 function fresh() { return { v: 1, settings: { ...DEFAULT_SETTINGS }, stars: 0, xp: 0, quests: {}, active: null, badges: {}, words: {}, quiz: {}, practice: {}, player: null, hotbar: 0, started: false, math: freshMath() }; }
 export let state = fresh();
 export function loadState() {
-  state = fresh();
+  owner = profiles.active; state = fresh();
   try { const s = JSON.parse(localStorage.getItem(KEY()) || 'null'); if (s && s.v === 1) { state = Object.assign(fresh(), s); state.settings = { ...DEFAULT_SETTINGS, ...(s.settings || {}) }; state.math = { ...freshMath(), ...(s.math || {}) }; } } catch (e) { }
   const p = activeProfile(); if (p) state.settings.name = p.name;
   return state;
 }
 let t = null;
-export function saveState(now) { clearTimeout(t); const key = KEY(); const f = () => { if (!profiles.active) return; try { localStorage.setItem(key, JSON.stringify(state)); } catch (e) { } }; if (now) f(); else t = setTimeout(f, 800); }
+export function saveState(now) { clearTimeout(t); const key = KEY(); const f = () => { if (!owner || !profiles.list.some(p => p.id === owner)) return; try { localStorage.setItem(key, JSON.stringify(state)); } catch (e) { } }; if (now) f(); else t = setTimeout(f, 800); }
 export function loadWorldEdits() { try { return JSON.parse(localStorage.getItem(WKEY()) || '{}'); } catch (e) { return {}; } }
 let wt = null;
-export function saveWorld(edits, now) { clearTimeout(wt); const key = WKEY(); const f = () => { if (!profiles.active) return; try { localStorage.setItem(key, JSON.stringify(edits)); } catch (e) { } }; if (now) f(); else wt = setTimeout(f, 1500); }
+export function saveWorld(edits, now) { clearTimeout(wt); const key = WKEY(); const f = () => { if (!owner || !profiles.list.some(p => p.id === owner)) return; try { localStorage.setItem(key, JSON.stringify(edits)); } catch (e) { } }; if (now) f(); else wt = setTimeout(f, 1500); }
 export function resetAll() { localStorage.removeItem(KEY()); localStorage.removeItem(WKEY()); state = fresh(); const p = activeProfile(); if (p) state.settings.name = p.name; saveState(true); }

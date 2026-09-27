@@ -110,7 +110,7 @@ export function vis(v) {
     case 'base10': return base10(v.n);
     case 'array': return array(v.r, v.c, v.icon);
     case 'fracbar': return svg(340, 42, fracbar(v.d, v.a), 'fraction bar');
-    case 'fracbars': { let b = ''; v.bars.forEach(([a, d], i) => b += fracbar(d, a, 4 + i * 44, 300, `${a}/${d}`)); return svg(370, v.bars.length * 44 + 4, b, 'fraction bars'); }
+    case 'fracbars': { let b = ''; v.bars.forEach(([a, d, lab], i) => b += fracbar(d, a, 4 + i * 44, 300, lab || `${a}/${d}`)); return svg(370, v.bars.length * 44 + 4, b, 'fraction bars'); }
     case 'fracline': { const W = 320; let b = line(20, 30, W + 20, 30); for (let i = 0; i <= v.d; i++) b += line(20 + i * W / v.d, 22, 20 + i * W / v.d, 38, { sw: 1.5 }); b += txt(20, 58, 0, { size: 13 }) + txt(W + 20, 58, 1, { size: 13 }) + `<circle cx="${20 + v.a * W / v.d}" cy="30" r="7" fill="${C.red}"/>`; return svg(W + 40, 64, b, 'fraction number line'); }
     case 'fracshape': return fracshape(v.parts, v.shaded);
     case 'clock': return clock(v.h, v.m);

@@ -49,7 +49,7 @@ export function P(...parts) {
     } else if (p.say && p.text != null) { text += p.text; say.push(...p.say); } // nested P
     else { text += p.d; say.push(...p.s); }
   }
-  return { text: text.replace(/\s+/g, ' ').replace(/ ([?.!,:;])/g, '$1').trim(), say };
+  return { text: text.replace(/\s+/g, ' ').replace(/([\w’'"”)¢%]) ([?.!,:;])(?=\s|$)/g, '$1$2').trim(), say };
 }
 // problem helper
 export function prob(o) { return { input: 'choice', steps: [], ...o }; }
@@ -58,8 +58,8 @@ export function prob(o) { return { input: 'choice', steps: [], ...o }; }
 export function numChoices(ans, { n = 4, spread = null, neg = false, extra = [] } = {}) {
   const set = new Set([ans]); const out = [ans];
   const sp = spread || Math.max(2, Math.round(Math.abs(ans) * 0.12));
-  const cands = [...extra, ans + 1, ans - 1, ans + 10, ans - 10, ans + 2, ans - 2, ans + sp, ans - sp, ans + 100, ans - 100];
-  for (const c of shuffle(cands.slice(extra.length)).concat()) { }
+  const A = Math.abs(ans); // keep distractors believable: no ±10 for small answers, no ±100 below 200
+  const cands = [...extra, ans + 1, ans - 1, ...(A >= 15 ? [ans + 10, ans - 10] : []), ans + 2, ans - 2, ans + sp, ans - sp, ...(A >= 200 ? [ans + 100, ans - 100] : [])];
   const tryAdd = c => { if (out.length >= n) return; if (!Number.isInteger(c) || set.has(c) || (!neg && c < 0)) return; set.add(c); out.push(c); };
   extra.forEach(tryAdd); shuffle(cands.slice(extra.length)).forEach(tryAdd);
   let k = 3; while (out.length < n) { tryAdd(ans + k); tryAdd(ans - k); k++; }

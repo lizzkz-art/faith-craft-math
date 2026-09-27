@@ -20,14 +20,15 @@ export class Placement {
   // the next item {strand, skillId} or null when finished
   next() {
     const open = this.strands.filter(x => !x.done); if (!open.length) return null;
-    const st = open[this.i++ % open.length]; this.cur = st;
+    const st = open[this.i++ % open.length]; this.cur = st; this.ask = st.lv;
     const pool = skillsNear(st.s, st.lv); const sk = pool[Math.floor(this.rnd() * pool.length)];
     return { strand: st.s, lv: sk.lv, id: sk.id };
   }
   answer(ok, lv = this.cur.lv) {
     const st = this.cur; st.n++; this.total++; st.log.push({ lv, ok });
     const S = STRANDS[st.s];
-    if (ok) { st.passed = Math.max(st.passed, lv); if (lv >= S.max) st.done = st.log.filter(x => x.ok && x.lv >= S.max).length >= 1 && st.n >= 2 || st.n >= this.maxItems; st.lv = Math.min(S.max, lv + 1); }
+    // a pass on the nearest available skill counts for the level asked (some strands have no skill at every grade)
+    if (ok) { lv = Math.max(lv, this.ask == null ? lv : this.ask); st.passed = Math.max(st.passed, lv); if (lv >= S.max) st.done = st.log.filter(x => x.ok && x.lv >= S.max).length >= 1 && st.n >= 2 || st.n >= this.maxItems; st.lv = Math.min(S.max, lv + 1); }
     else { st.failed = Math.min(st.failed, lv); if (lv <= S.min) st.done = st.n >= 2 || st.log.filter(x => !x.ok && x.lv <= S.min).length >= 2; st.lv = Math.max(S.min, lv - 1); }
     // bracketed (pass at L, miss at L+1) and at least one confirming item
     if (st.failed === st.passed + 1 && st.n >= 3) st.done = true;

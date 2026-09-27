@@ -171,7 +171,7 @@ export const QUESTS = {
     intro: ["Oh, hello there! I’m Noah. Am I glad to see you!", "God asked me to build a giant boat. It’s called an ark.", "It sounded strange at first. But I trust God, so I said yes.", "Could you give me a hand? We need planks, and then the animals, two by two."],
     start: "Let’s build it!",
     steps: [
-      { type: "math", text: "Solve the ark math with Noah", label: "Math solved" },
+      { type: "math", text: "Solve the ark math with Noah" },
       { type: "planks", count: 10, text: "Place planks in the glowing ark area", label: "Planks placed" },
       { type: "lead", species: "sheep", zone: "ark", count: 2, text: "Lead 2 sheep into the ark. Walk close to a sheep and it will follow you.", label: "Sheep in the ark" },
       { type: "lead", species: "cow", zone: "ark", count: 2, text: "Now lead 2 cows into the ark.", label: "Cows in the ark" },
@@ -187,7 +187,7 @@ export const QUESTS = {
     intro: ["Hey, friend! I’m David. I take care of my dad’s sheep.", "Some days I feel small. Some days I feel scared.", "But I’ve learned something. When I trust God, I can be brave.", "Can you help me? I need five smooth stones from the brook."],
     start: "I’ll find them!",
     steps: [
-      { type: "math", text: "Solve the stone math with David", label: "Math solved" },
+      { type: "math", text: "Solve the stone math with David" },
       { type: "collect", item: "pebble", count: 5, text: "Find 5 smooth stones by the brook", label: "Smooth stones" },
       { type: "talk", npc: "david", text: "Bring the stones to David" },
     ],
@@ -201,7 +201,7 @@ export const QUESTS = {
     intro: ["Hello, my friend. My name is Moses.", "Can I tell you something? Talking was always hard for me.", "When God called me, I said, “I can’t speak well.”", "And God said, “I will be with your mouth.” He helped me every time.", "There is something special at the top of this mountain. Will you climb up and bring down the stone tablets?"],
     start: "I’ll climb it!",
     steps: [
-      { type: "math", text: "Solve the mountain time math with Moses", label: "Math solved" },
+      { type: "math", text: "Solve the mountain time math with Moses" },
       { type: "reach", where: "summit", text: "Climb to the top of Mount Sinai" },
       { type: "collect", item: "tablets", count: 1, text: "Pick up the stone tablets", label: "Tablets" },
       { type: "talk", npc: "moses", text: "Bring the tablets down to Moses" },
@@ -225,7 +225,7 @@ export const QUESTS = {
     steps: [
       { type: "collect", item: "water", count: 1, text: "Get a jar of water from the village well", label: "Water jar" },
       { type: "collect", item: "bandage", count: 1, text: "Find bandages inside the inn", label: "Bandages" },
-      { type: "math", text: "Solve the money math for the innkeeper", label: "Math solved" },
+      { type: "math", text: "Solve the money math for the innkeeper" },
       { type: "talk", npc: "samaritan", text: "Bring the water and bandages to the traveler" },
     ],
     outro: ["Ahh, that’s so much better. Thank you, friend.", "Jesus said a true neighbor is someone who shows mercy.", "Today, that was you."],
@@ -244,7 +244,7 @@ export const QUESTS = {
       ],
     },
     steps: [
-      { type: "math", text: "Solve the sharing math with Andrew", label: "Math solved" },
+      { type: "math", text: "Solve the sharing math with Andrew" },
       { type: "share", npcs: ["hungry1", "hungry2", "hungry3"], text: "Share bread with 3 hungry villagers", label: "People fed" },
       { type: "talk", npc: "andrew", text: "Go back to Andrew" },
     ],
@@ -264,7 +264,7 @@ export const QUESTS = {
       ],
     },
     steps: [
-      { type: "math", text: "Solve the storehouse math with Joseph", label: "Math solved" },
+      { type: "math", text: "Solve the storehouse math with Joseph" },
       { type: "collect", item: "grain", count: 3, text: "Get 3 sacks of grain from the storehouse", label: "Grain sacks" },
       { type: "share", npcs: ["bro1", "bro2", "bro3"], text: "Give grain to your 3 brothers", label: "Brothers helped" },
       { type: "talk", npc: "joseph", text: "Go back to Joseph" },
@@ -279,7 +279,7 @@ export const QUESTS = {
     intro: ["Hello, friend! I’m Nehemiah.", "The wall around our city has a gap in it. We are rebuilding it, one stone at a time.", "Everyone is helping. Families work side by side.", "Will you help me measure the gap and fill it in?"],
     start: "Let’s rebuild it!",
     steps: [
-      { type: "math", text: "Measure the gap with Nehemiah", label: "Math solved" },
+      { type: "math", text: "Measure the gap with Nehemiah" },
       { type: "fill", count: 6, text: "Fill the gap: place 6 blocks in the glowing space", label: "Wall blocks" },
       { type: "talk", npc: "micah", text: "Talk to Nehemiah" },
     ],

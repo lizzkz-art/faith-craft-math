@@ -279,7 +279,7 @@ add('g3.fracline', 'frac', 4, 'Fractions on a number line', () => {
 add('g3.fraceq', 'frac', 4, 'Simple equivalent fractions', () => {
   const d = pick([2, 3, 4]), a = ri(1, d - 1), k = pick([2, 3].filter(x => d * x <= 8)); const D = d * k;
   const opts = uniq([a * k, a + k, a * k + 1, a], x => x).filter(x => x > 0 && x < D).slice(0, 4);
-  return prob({ q: P('Find the missing number. ', FR(a, d), ' ', S('='), ' ', DS('?/' + D, 'what number over ' + D)), vis: { t: 'fracbars', bars: [[a, d], [a * k, D]] }, ans: N(a * k), choices: shuffle(opts).map(N), data: { solve: [['/', 'x', D], ['/', a, d]] },
+  return prob({ q: P('Find the missing number. ', FR(a, d), ' ', S('='), ' ', DS('?/' + D, 'what number over ' + D)), vis: { t: 'fracbars', bars: [[a, d], [0, D, '?/' + D]] }, ans: N(a * k), choices: shuffle(opts).map(N), data: { solve: [['/', 'x', D], ['/', a, d]] },
     hint: P('Look at the bars. Each part is cut into ', N(k), ' smaller parts.'), steps: [P('Each ', FR(1, d), ' is ', N(k), ' of the ', FR(1, D), ' parts.'), P(FR(a, d), ' ', S('='), ' ', FR(a * k, D))] });
 });
 add('g3.fraccmp', 'frac', 4, 'Compare fractions (same top or bottom)', () => {
@@ -351,7 +351,7 @@ add('g4.fraceq', 'frac', 5, 'Equivalent fractions', () => {
   const d = pick([2, 3, 4, 5, 6]), a = ri(1, d - 1); if (gcd(a, d) > 1) return again('g4.fraceq');
   const k = pick([2, 3, 4, 5].filter(x => d * x <= 12 || (d === 5 && x === 4))); const D = d * k;
   const opts = uniq([a * k, a + k, a * k + 1, a * k - 1, a], x => x).filter(x => x > 0 && x < D).slice(0, 4);
-  return prob({ q: P('Find the missing number. ', FR(a, d), ' ', S('='), ' ', DS('?/' + D, 'what number over ' + D)), vis: { t: 'fracbars', bars: [[a, d], [a * k, D]] }, ans: N(a * k), choices: shuffle(opts).map(N), num: true, data: { solve: [['/', 'x', D], ['/', a, d]] },
+  return prob({ q: P('Find the missing number. ', FR(a, d), ' ', S('='), ' ', DS('?/' + D, 'what number over ' + D)), vis: { t: 'fracbars', bars: [[a, d], [0, D, '?/' + D]] }, ans: N(a * k), choices: shuffle(opts).map(N), num: true, data: { solve: [['/', 'x', D], ['/', a, d]] },
     hint: P(N(d), ' times what number is ', N(D), '? Multiply the top by the same number.'), steps: [P(N(d), ' ', S('×'), ' ', N(k), ' ', S('='), ' ', N(D), ', so ', N(a), ' ', S('×'), ' ', N(k), ' ', S('='), ' ', N(a * k), '.'), P(FR(a, d), ' ', S('='), ' ', FR(a * k, D))] });
 });
 const DEN4 = [2, 3, 4, 5, 6, 8, 10, 12];
