@@ -354,3 +354,11 @@ body.band-mid .mqtext { font-size: 1.2em; } body.band-mid .mchoice { font-size: 
 body.band-teen .mqtext { font-size: 1.1em; } body.band-teen .mchoice { font-size: 1.2em; min-height: 62px; box-shadow: 0 3px 0 #b9a67f; border-radius: 14px; }
 body.band-mid .home .logo, body.band-teen .home .logo { display: none; }
 @media (max-width: 820px) { .tiles { grid-template-columns: 1fr; } .ttgrid { grid-template-columns: repeat(3, 1fr); } .mchoices.n3 { grid-template-columns: repeat(2, 1fr); } .profile { width: 140px; min-height: 170px; } }
+/* character look picker (hair style, accessory, outfit) */
+.lookrow { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.lookprev { display: flex; gap: 8px; } .lookprev svg { display: block; border-radius: 16px; background: #cfe6f7; box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+.lookopts { flex: 1; min-width: 260px; }
+.stylepick { display: flex; gap: 8px; margin: 4px 0 12px; flex-wrap: wrap; }
+.stylebtn { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 84px; padding: 6px 8px; font-size: .85em; }
+.stylebtn .sticon svg { display: block; border-radius: 10px; background: #dfe9f3; }
+.stylebtn.on { background: #3d8fe0; color: #fff; border-color: #245f9e; box-shadow: 0 0 0 3px #3d8fe0; }

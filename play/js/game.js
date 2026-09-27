@@ -4,7 +4,7 @@ import { World, W, D, H, CS, B, BLOCKS, PLACES, meshChunk, brookX } from './worl
 import * as E from './entities.js';
 import { NPCS, QUESTS, QUEST_ORDER, NPC_LINES, BLOCK_HOTBAR, HELLOS, PHRASES, TALK } from './data.js';
 import { Music } from './music.js';
-import { state, loadState, saveState, loadWorldEdits, saveWorld, activeProfile, LOOKS } from './save.js';
+import { state, loadState, saveState, loadWorldEdits, saveWorld, activeProfile, lookColors } from './save.js';
 import * as MU from './mathui.js';
 import * as UI from './ui.js';
 import { Sound } from './audio.js';
@@ -134,7 +134,9 @@ function updatePlayer(dt) {
 const cam = { phase: 0, amt: 0, land: 0, y: null, bobX: 0, bobY: 0, roll: 0, dist: 0, pinch: 1, zoomKey: null, raise: 0 };
 
 // The camera never goes inside a block: behind/front views pull in toward the player when terrain is in the way.
-const playerModel = E.buildPlayer(LOOKS.find(l => l.id === (activeProfile() || {}).look) || LOOKS[0]); playerModel.visible = false; scene.add(playerModel);
+let playerModel = E.buildPlayer(lookColors((activeProfile() || {}).look)); playerModel.visible = false; scene.add(playerModel);
+// rebuild the character after the look is changed in the parent area
+function refreshPlayerLook() { const m = E.buildPlayer(lookColors((activeProfile() || {}).look)); m.visible = false; scene.remove(playerModel); playerModel = m; scene.add(m); }
 const camTarget = new THREE.Vector3(), camDir = new THREE.Vector3();
 function camFree(x, y, z) { const r = 0.24; for (const dx of [-r, r]) for (const dy of [-r, r]) for (const dz of [-r, r]) if (world.solid(x + dx, y + dy, z + dz)) return false; return true; }
 function camFreeDist(pitch, mode, want) { // how far the camera can sit from his head at this angle without touching a block
@@ -169,7 +171,7 @@ function updateCamera(dt, playing) {
   playerModel.visible = playing && cam.dist > 0.9;
   playerModel.position.set(P.pos.x, footY, P.pos.z); playerModel.rotation.y = P.yaw + Math.PI;
   const U = playerModel.userData, sw = Math.sin(cam.phase) * 0.7 * cam.amt, calm = state.settings.calm;
-  U.legL.rotation.x = sw; U.legR.rotation.x = -sw; U.armL.rotation.x = -sw * 0.8; U.armR.rotation.x = sw * 0.8 - (hand.swing > 0 ? Math.sin(hand.swing * Math.PI) * 1.2 : 0);
+  U.legL.rotation.x = sw * U.legSwing; U.legR.rotation.x = -sw * U.legSwing; U.armL.rotation.x = -sw * 0.8; U.armR.rotation.x = sw * 0.8 - (hand.swing > 0 ? Math.sin(hand.swing * Math.PI) * 1.2 : 0);
   U.armL.rotation.z = -0.04 - (calm ? 0 : Math.sin(performance.now() / 900) * 0.02); U.armR.rotation.z = 0.04;
   U.head.rotation.x = -P.pitch * 0.5; U.rig.position.y = Math.abs(Math.sin(cam.phase)) * 0.05 * cam.amt;
 }
@@ -608,6 +610,7 @@ let uiOpen = true;
 const G = {
   mode: 'title', isTouch: () => touchMode,
   setUIOpen(v) { uiOpen = v || !$('#overlay').classList.contains('hidden') || !$('#dialog').classList.contains('hidden') || !!document.querySelector('.modal'); if (uiOpen && document.pointerLockElement) document.exitPointerLock(); hud.classList.toggle('uiopen', uiOpen); input.f = input.s = 0; input.jump = false; },
+  refreshPlayerLook,
   afterScreenClose() { if (G.mode === 'title') UI.title(); else { G.setUIOpen(false); updateHUD(); } },
   startPlay() { G.mode = 'play'; state.started = true; saveState(); hud.classList.remove('hidden'); document.body.classList.add('playing'); G.setUIOpen(false); updateHUD(); refreshMarkers(); questWorldChanged(); if (!touchMode) $('#clickhint').classList.remove('hidden'); },
   openTalk: id => openTalk(id), talkMain: id => talkTo(npcs[id]),

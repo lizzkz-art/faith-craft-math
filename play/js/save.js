@@ -9,6 +9,21 @@ export const LOOKS = [
   { id: 'green', name: 'Forest', skin: '#d8a47a', hair: '#3b2a1a', shirt: '#3aa76d', shirt2: '#2c8454', jeans: '#5a4632' },
   { id: 'sky', name: 'Sky', skin: '#e8b98a', hair: '#e0c068', shirt: '#4a90d9', shirt2: '#2f6fb3', jeans: '#2d3a55', long: true },
 ];
+// Hair style, accessory, and outfit choices. A profile's look (inside fcmath.profiles.v1) is either an old preset id
+// such as 'teal' or { id, hairStyle, acc, outfit }. Missing fields fall back to the original look: short hair
+// (long for the presets that always had long hair), no accessory, shirt and pants.
+export const HAIR_STYLES = [['short', 'Short'], ['long', 'Long'], ['ponytail', 'Ponytail'], ['pigtails', 'Pigtails'], ['braids', 'Braids'], ['puffs', 'Curly puffs']];
+export const ACCESSORIES = [['none', 'None'], ['bow', 'Bow'], ['headband', 'Headband']];
+export const OUTFITS = [['pants', 'Shirt and pants'], ['dress', 'Dress']];
+export const BOW_COLOR = '#ff5c9a';
+const pickOpt = (v, list, dflt) => (list.find(o => o[0] === v) || list.find(o => o[0] === dflt) || list[0])[0];
+const presetOf = id => LOOKS.find(l => l.id === id) || LOOKS[0];
+export function normLook(look) {
+  const o = look && typeof look === 'object' ? look : { id: look }, base = presetOf(o.id);
+  return { id: base.id, hairStyle: pickOpt(o.hairStyle, HAIR_STYLES, base.long ? 'long' : 'short'), acc: pickOpt(o.acc, ACCESSORIES), outfit: pickOpt(o.outfit, OUTFITS) };
+}
+// Everything needed to draw the look: the preset's colors plus the style choices
+export function lookColors(look) { const L = normLook(look), b = presetOf(L.id); return { skin: b.skin, hair: b.hair, shirt: b.shirt, shirt2: b.shirt2, jeans: b.jeans, ...L }; }
 export function loadProfiles() {
   try { const p = JSON.parse(localStorage.getItem(PKEY) || 'null'); if (p && Array.isArray(p.list)) return { pin: null, ...p }; } catch (e) { }
   return { list: [], active: null, pin: null };

@@ -1,5 +1,5 @@
 // Faith Craft Math: players, placement quiz, problem runner, practice modes, parent area, report card.
-import { state, saveState, profiles, saveProfiles, activeProfile, addProfile, deleteProfile, setActive, LOOKS, MAX_PROFILES, freshMath, resetAll } from './save.js';
+import { state, saveState, profiles, saveProfiles, activeProfile, addProfile, deleteProfile, setActive, LOOKS, MAX_PROFILES, HAIR_STYLES, ACCESSORIES, OUTFITS, BOW_COLOR, normLook, lookColors, freshMath, resetAll } from './save.js';
 import { Speech } from './speech.js';
 import { Sound } from './audio.js';
 import { h, openScreen, closeScreen, readable, speakBtn, toast, confetti, sayLines, starBurst, recordWidget, today } from './ui.js';
@@ -220,9 +220,88 @@ export function missionMath(qid, onDone, onCancel) {
 }
 
 // ---------- players ----------
-const lookOf = id => LOOKS.find(l => l.id === id) || LOOKS[0];
-export function avatar(look, size = 72) {
-  const L = lookOf(look); return h('div', { class: 'avatar', style: `width:${size}px;height:${size}px`, html: `<svg viewBox="0 0 16 16" width="${size}" height="${size}" shape-rendering="crispEdges"><rect x="3" y="2" width="10" height="9" fill="${L.skin}"/><rect x="3" y="1" width="10" height="3" fill="${L.hair}"/>${L.long ? `<rect x="2" y="2" width="2" height="9" fill="${L.hair}"/><rect x="12" y="2" width="2" height="9" fill="${L.hair}"/>` : `<rect x="2" y="2" width="1" height="4" fill="${L.hair}"/><rect x="13" y="2" width="1" height="4" fill="${L.hair}"/>`}<rect x="5" y="6" width="2" height="2" fill="#fff"/><rect x="9" y="6" width="2" height="2" fill="#fff"/><rect x="6" y="6" width="1" height="2" fill="#2a4a8a"/><rect x="10" y="6" width="1" height="2" fill="#2a4a8a"/><rect x="6" y="9" width="4" height="1" fill="#b04a3e"/><rect x="2" y="11" width="12" height="5" fill="${L.shirt}"/><rect x="7" y="12" width="2" height="2" fill="#ffd84a"/></svg>` });
+// Player faces and figures: preset colors plus hair style, accessory, and outfit (same drawings as the Family Edition)
+const shade = (hex, k) => '#' + [1, 3, 5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * k))).toString(16).padStart(2, '0')).join('');
+const R = (x, y, w, hh, c, rx, stroke) => `<rect x="${x}" y="${y}" width="${w}" height="${hh}"${rx ? ` rx="${rx}"` : ''} fill="${c}"${stroke ? ` stroke="${stroke}" stroke-width="1.5"` : ''}/>`;
+function bowSVG(cx, y) { return R(cx - 11, y, 9, 9, BOW_COLOR, 1) + R(cx + 2, y, 9, 9, BOW_COLOR, 1) + R(cx - 3, y + 1, 6, 7, shade(BOW_COLOR, 0.72), 1); }
+function faceSVG(look = {}, size = 64) {
+  const L = lookColors(look), sk = L.skin, hr = L.hair, sh = L.shirt, hd = shade(hr, 0.72), st = L.hairStyle;
+  const tie = L.acc === 'bow' ? BOW_COLOR : shade(hr, 0.55);
+  let back = '', front = '', top = '';
+  // shirt or dress at the bottom
+  let clothes = R(0, 50, 64, 14, sh);
+  if (L.outfit === 'dress') clothes += R(0, 50, 11, 8, shade(sh, 1.18)) + R(53, 50, 11, 8, shade(sh, 1.18)) + R(22, 50, 20, 4, sk) + R(18, 54, 4, 3, '#ffffff') + R(42, 54, 4, 3, '#ffffff') + R(22, 54, 20, 3, '#ffffff');
+  if (st === 'long') {
+    back = R(8, 6, 48, 46, hr);
+    front = R(8, 6, 8, 46, hr) + R(48, 6, 8, 46, hr) + R(6, 46, 12, 18, hr) + R(46, 46, 12, 18, hr) + R(9, 52, 2, 12, hd) + R(53, 52, 2, 12, hd);
+    top = R(10, 4, 44, 11, hr) + R(12, 13, 8, 4, hr) + R(44, 13, 8, 4, hr);
+  } else if (st === 'ponytail') {
+    back = R(47, 3, 14, 10, hr, 4, hd) + R(52, 10, 11, 38, hr, 3, hd) + R(54, 44, 7, 6, hd);
+    front = R(10, 4, 6, 22, hr) + R(48, 4, 6, 22, hr) + R(47, 6, 7, 8, tie);
+    top = R(10, 4, 44, 12, hr);
+  } else if (st === 'pigtails') {
+    back = R(0, 20, 11, 28, hr, 3, hd) + R(53, 20, 11, 28, hr, 3, hd) + R(2, 43, 7, 6, hd) + R(55, 43, 7, 6, hd);
+    front = R(10, 4, 6, 24, hr) + R(48, 4, 6, 24, hr) + R(3, 14, 9, 7, tie) + R(52, 14, 9, 7, tie);
+    top = R(10, 4, 44, 12, hr) + R(31, 4, 2, 10, hd);
+  } else if (st === 'braids') {
+    front = R(10, 4, 6, 32, hr) + R(48, 4, 6, 32, hr);
+    for (let i = 0; i < 3; i++) { const y = 34 + i * 8, dx = i % 2 ? 1 : -1; front += R(9 + dx, y, 8, 8, i % 2 ? hd : hr, 2) + R(47 - dx, y, 8, 8, i % 2 ? hd : hr, 2); }
+    front += R(9, 58, 8, 4, tie) + R(47, 58, 8, 4, tie);
+    top = R(10, 4, 44, 12, hr) + R(31, 4, 2, 10, hd);
+  } else if (st === 'puffs') {
+    back = R(1, 0, 20, 19, hr, 7) + R(43, 0, 20, 19, hr, 7);
+    front = R(10, 6, 5, 16, hr) + R(49, 6, 5, 16, hr) + R(5, 4, 3, 3, hd) + R(12, 8, 3, 3, hd) + R(7, 12, 3, 3, hd) + R(49, 4, 3, 3, hd) + R(56, 8, 3, 3, hd) + R(52, 12, 3, 3, hd);
+    top = R(12, 6, 40, 9, hr);
+  } else {
+    front = R(10, 4, 6, 24, hr) + R(48, 4, 6, 24, hr);
+    top = R(10, 4, 44, 12, hr);
+  }
+  let acc = '';
+  if (L.acc === 'headband') acc = R(10, 11, 44, 4, sh === BOW_COLOR ? '#ffffff' : shade(sh, 1.1)) + R(10, 11, 44, 1, shade(sh, 1.35));
+  else if (L.acc === 'bow') acc = st === 'puffs' ? bowSVG(32, 0) : st === 'pigtails' ? bowSVG(8, 12) + bowSVG(56, 12) : st === 'ponytail' ? bowSVG(51, 3) : bowSVG(45, 0);
+  const faceParts = R(12, 8, 40, 42, sk, 3) + R(21, 26, 7, 7, '#fff') + R(36, 26, 7, 7, '#fff') + R(23, 28, 4, 5, '#2a4a8a') + R(38, 28, 4, 5, '#2a4a8a') + R(25, 40, 14, 3, '#b04a3e');
+  return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">${back}${clothes}${st === 'long' ? front + faceParts : faceParts + front}${top}${acc}</svg>`;
+}
+// Full blocky figure (for the outfit choice and the big preview)
+function figureSVG(look = {}, size = 64) {
+  const L = lookColors(look), sk = L.skin, hr = L.hair, sh = L.shirt, dress = L.outfit === 'dress';
+  const backHair = L.hairStyle === 'long' ? R(19, 2, 26, 32, hr) : '';
+  const hair = L.hairStyle === 'long' ? R(20, 2, 24, 6, hr) : L.hairStyle === 'puffs' ? R(14, 0, 12, 11, hr, 4) + R(38, 0, 12, 11, hr, 4) + R(20, 3, 24, 5, hr) : R(20, 2, 24, 7, hr);
+  const face = R(22, 4, 20, 18, sk) + R(26, 11, 3, 3, '#2a4a8a') + R(35, 11, 3, 3, '#2a4a8a') + R(29, 17, 6, 1.5, '#b04a3e') + (L.hairStyle === 'long' ? R(19, 4, 4, 30, hr) + R(41, 4, 4, 30, hr) : R(22, 4, 20, 3, hr));
+  const arms = R(12, 23, 7, 7, sh) + R(45, 23, 7, 7, sh) + R(13, 30, 5, 13, sk) + R(46, 30, 5, 13, sk);
+  const bodyP = dress ? R(20, 22, 24, 18, sh) + R(27, 22, 10, 2, sk) + R(16, 38, 32, 12, sh) + R(16, 48, 32, 2, shade(sh, 0.75)) + R(23, 50, 7, 8, sk) + R(34, 50, 7, 8, sk) + R(23, 56, 7, 2, '#ffffff') + R(34, 56, 7, 2, '#ffffff')
+    : R(20, 22, 24, 20, sh) + R(20, 40, 24, 2, shade(sh, 0.75)) + R(21, 42, 10, 16, L.jeans) + R(33, 42, 10, 16, L.jeans);
+  return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">${backHair}${arms}${bodyP}${R(dress ? 22 : 20, 58, dress ? 9 : 12, 5, '#3b2d24')}${R(dress ? 33 : 32, 58, dress ? 9 : 12, 5, '#3b2d24')}${hair}${face}</svg>`;
+}
+export function avatar(look, size = 72) { return h('div', { class: 'avatar', style: `width:${size}px;height:${size}px`, html: faceSVG(look, size) }); }
+// Look picker for New player and the parent area: colors, hair style, accessory, outfit, each with preview icons,
+// plus a big face and a small full-body preview. Edits the given look object in place.
+function lookPicker(look) {
+  Object.assign(look, normLook(look));
+  const prev = h('div', { class: 'lookprev' }); const opts = [];
+  const upd = () => { prev.innerHTML = faceSVG(look, 96) + figureSVG(look, 96); opts.forEach(f => f()); };
+  const choices = (key, list, icon, cls = 'stylebtn') => {
+    const row = h('div', { class: 'stylepick', role: 'radiogroup' });
+    for (const [v, label] of list) {
+      const ic = h('span', { class: 'sticon' });
+      const b = h('button', { class: 'btn ' + cls + (look[key] === v ? ' on' : ''), 'data-look': key, 'data-v': v, role: 'radio', 'aria-label': label, 'aria-checked': String(look[key] === v), onclick: tap(() => { look[key] = v; row.querySelectorAll('button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); }); upd(); }) }, ic, h('span', { class: 'stlabel' }, label));
+      opts.push(() => { ic.innerHTML = icon({ ...look, [key]: v }); }); row.append(b);
+    }
+    return row;
+  };
+  const faceIcon = l => faceSVG(l, 56), figIcon = l => figureSVG(l, 56);
+  const el = h('div', { class: 'lookrow' }, prev, h('div', { class: 'lookopts' },
+    h('div', { class: 'small' }, 'Colors'), choices('id', LOOKS.map(L => [L.id, L.name]), faceIcon),
+    h('div', { class: 'small' }, 'Hair style'), choices('hairStyle', HAIR_STYLES, faceIcon),
+    h('div', { class: 'small' }, 'Accessory'), choices('acc', ACCESSORIES, faceIcon),
+    h('div', { class: 'small' }, 'Outfit'), choices('outfit', OUTFITS, figIcon)));
+  upd(); return el;
+}
+function editLook(q) {
+  const look = normLook(q.look);
+  const body = openScreen(`${q.name}’s character`, { onBack: parentArea });
+  body.append(h('div', { class: 'card' }, lookPicker(look),
+    h('div', { class: 'row center' }, h('button', { class: 'btn primary big', 'data-act': 'savelook', onclick: tap(() => { q.look = { ...normLook(look) }; saveProfiles(); toast('Saved.'); if (q.id === profiles.active && G && G.refreshPlayerLook) G.refreshPlayerLook(); parentArea(); }) }, 'Save'))));
 }
 export function whoIsPlaying() {
   closeScreen(true); if (G) G.setUIOpen(true);
@@ -242,16 +321,14 @@ export function choosePlayer(id) {
 }
 export function newPlayer() {
   const body = openScreen('New player', { onBack: () => profiles.list.length ? whoIsPlaying() : newPlayer() });
-  let age = 9, look = LOOKS[profiles.list.length % LOOKS.length].id;
+  let age = 9; const look = normLook(LOOKS[profiles.list.length % LOOKS.length].id);
   const name = h('input', { type: 'text', maxlength: '20', class: 'nameinput', value: 'Player ' + (profiles.list.length + 1), 'aria-label': 'First name or nickname' });
   const ages = h('div', { class: 'agegrid' }); const agesUpd = () => ages.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.a === age));
   for (let a = 3; a <= 14; a++) ages.append(h('button', { class: 'btn agebtn', 'data-a': a, onclick: tap(() => { age = a; agesUpd(); }) }, String(a)));
-  const looks = h('div', { class: 'looks' }); const looksUpd = () => looks.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.l === look));
-  LOOKS.forEach(L => looks.append(h('button', { class: 'lookbtn', 'data-l': L.id, 'aria-label': L.name, onclick: tap(() => { look = L.id; looksUpd(); }) }, avatar(L.id, 64))));
   body.append(h('div', { class: 'card' }, h('label', { class: 'set' }, h('span', {}, 'Name or nickname'), name), h('div', { class: 'muted small' }, 'Tip: a nickname works great. It stays on this iPad.'),
-    h('h3', {}, 'How old is the player?'), ages, h('h3', {}, 'Pick a character'), looks,
-    h('button', { class: 'btn primary huge', onclick: tap(() => { const p = addProfile({ name: name.value, age, look, grade: gradeForAge(age) }); if (!p) return toast('You can have up to 6 players.'); setActive(p.id); try { sessionStorage.setItem('fcmath.skipWho', '1'); sessionStorage.setItem('fcmath.new', '1'); } catch (e) { } location.reload(); }) }, 'Create player')));
-  agesUpd(); looksUpd();
+    h('h3', {}, 'How old is the player?'), ages, h('h3', {}, 'Make your character'), lookPicker(look),
+    h('button', { class: 'btn primary huge', onclick: tap(() => { const p = addProfile({ name: name.value, age, look: { ...normLook(look) }, grade: gradeForAge(age) }); if (!p) return toast('You can have up to 6 players.'); setActive(p.id); try { sessionStorage.setItem('fcmath.skipWho', '1'); sessionStorage.setItem('fcmath.new', '1'); } catch (e) { } location.reload(); }) }, 'Create player')));
+  agesUpd();
 }
 // First run for a player: quiz or pick a level
 export function startChoice() {
@@ -327,7 +404,7 @@ export function parentArea() {
   for (const q of profiles.list) {
     const nm = h('input', { type: 'text', maxlength: '20', value: q.name, class: 'nameinput small' }); nm.addEventListener('change', () => { q.name = nm.value.trim().slice(0, 20) || q.name; saveProfiles(); if (q.id === profiles.active) state.settings.name = q.name; });
     const age = h('select', {}, Array.from({ length: 12 }, (_, k) => { const o = h('option', { value: k + 3 }, 'Age ' + (k + 3)); if (q.age === k + 3) o.selected = true; return o; })); age.addEventListener('change', () => { q.age = +age.value; saveProfiles(); });
-    list.append(h('div', { class: 'prow' }, avatar(q.look, 44), nm, age, q.id === profiles.active ? h('span', { class: 'chip' }, 'Playing now') : h('button', { class: 'btn small', onclick: tap(() => choosePlayer(q.id)) }, 'Switch'),
+    list.append(h('div', { class: 'prow' }, avatar(q.look, 44), nm, age, h('button', { class: 'btn small', 'data-act': 'look', onclick: tap(() => editLook(q)) }, 'Character'), q.id === profiles.active ? h('span', { class: 'chip' }, 'Playing now') : h('button', { class: 'btn small', onclick: tap(() => choosePlayer(q.id)) }, 'Switch'),
       h('button', { class: 'btn small danger', onclick: tap(() => { if (confirm(`Delete ${q.name} and all of their progress? This cannot be undone.`)) { deleteProfile(q.id); toast('Player deleted.'); if (!profiles.list.length) { location.reload(); return; } if (q.id === p?.id) { try { sessionStorage.removeItem('fcmath.skipWho'); } catch (e) { } location.reload(); return; } parentArea(); } }) }, 'Delete')));
   }
   body.append(list, h('div', { class: 'row' }, h('button', { class: 'btn', onclick: tap(() => pinPad('New 4-digit PIN', v => pinPad('Type it again', v2 => { if (v === v2) { profiles.pin = v; saveProfiles(); toast('Parent PIN saved.'); } else toast('The PINs did not match.'); }))) }, 'Change parent PIN')),

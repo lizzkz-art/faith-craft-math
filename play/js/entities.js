@@ -147,34 +147,97 @@ export function buildRainbow() {
 }
 
 // ---------- The player's own character (seen in the behind and front views) ----------
-// Blocky kid: brown hair, teal shirt with short sleeves, blue jeans, dark shoes. Faces +z like the NPCs.
+// Blocky kid in the chosen look: hair style (short, long, ponytail, pigtails, braids, curly puffs), optional bow or
+// headband, and shirt and pants or a knee-length dress. Faces +z like the NPCs.
+const BOW_COLOR = '#ff5c9a'; // same pink as the bow on the face icons (save.js)
+const darker = (hex, k = 0.78) => '#' + [1, 3, 5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * k))).toString(16).padStart(2, '0')).join('');
+// Hair that hangs below the head rides on the body (so it never swings into the back when the head tilts). It overlaps
+// the head's own hair a little, so it is drawn with a depth offset: the head's hair always wins, no flicker.
+const hairBackMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2 });
+// look = the resolved look from lookColors() in save.js: preset colors (skin, hair, shirt, shirt2, jeans) plus hairStyle, acc, outfit
 export function buildPlayer(look = {}) {
-  const skin = look.skin || '#e3a97e', hair = look.hair || '#5a3818', shirt = look.shirt || '#2bb3a3', shirt2 = look.shirt2 || '#1f8f82', jeans = look.jeans || '#3a5da8', shoe = '#3b2d24';
+  const L = look, st = L.hairStyle || 'short', dress = L.outfit === 'dress';
+  const skin = L.skin || '#e3a97e', hair = L.hair || '#5a3818', shirt = L.shirt || '#2bb3a3', shirt2 = L.shirt2 || darker(shirt), jeans = L.jeans || '#3a5da8', shoe = '#3b2d24';
+  const hair2 = darker(hair, 0.72), tie = L.acc === 'bow' ? BOW_COLOR : darker(hair, 0.5), bow2 = darker(BOW_COLOR, 0.72);
   const grp = new THREE.Group(), rig = new THREE.Group(); grp.add(rig);
-  const body = mergeBoxes([
-    [0.54, 0.66, 0.3, 0, 1.04, 0, shirt],             // shirt
-    [0.55, 0.08, 0.31, 0, 0.72, 0, shirt2],           // shirt hem
+  const NY = 1.37;
+  // ---- body ----
+  const bodyParts = [
+    [0.54, 0.66, 0.3, 0, 1.04, 0, shirt],             // shirt (the top of the dress)
+    dress ? [0.55, 0.06, 0.31, 0, 0.8, 0, shirt2] : [0.55, 0.08, 0.31, 0, 0.72, 0, shirt2], // waist band / shirt hem
     [0.2, 0.06, 0.02, 0, 1.34, 0.152, skin],          // neckline (front)
     [0.2, 0.2, 0.02, 0, 1.05, 0.155, '#ffd84a'],      // little star on the front
-  ]);
-  const NY = 1.37;
-  const head = mergeBoxes([
-    [0.5, 0.5, 0.5, 0, 0.25, 0, skin],
-    [0.52, 0.14, 0.52, 0, 0.47, 0, hair],             // hair top
-    [0.52, 0.44, 0.08, 0, 0.29, -0.23, hair],          // hair back (what you see in the behind view)
-    [0.08, 0.26, 0.44, -0.235, 0.35, -0.03, hair], [0.08, 0.26, 0.44, 0.235, 0.35, -0.03, hair], // sides
-    [0.5, 0.08, 0.06, 0, 0.42, 0.24, hair],            // fringe
-    ...(look.long ? [[0.52, 0.34, 0.1, 0, 0.0, -0.24, hair]] : []), // longer hair down the back
+  ];
+  if (dress) bodyParts.push(
+    [0.56, 0.14, 0.36, 0, 0.68, 0, shirt],            // skirt, upper
+    [0.64, 0.23, 0.44, 0, 0.52, 0, shirt],            // skirt, lower (flares out; ends at the knee)
+    [0.65, 0.05, 0.45, 0, 0.43, 0, shirt2],           // hem
+    [0.08, 0.05, 0.02, -0.14, 1.33, 0.157, '#ffffff'], [0.08, 0.05, 0.02, 0.14, 1.33, 0.157, '#ffffff']); // little collar
+  const back = []; // hair below the head (on the body)
+  // ---- head ----
+  const head = [[0.5, 0.5, 0.5, 0, 0.25, 0, skin]];
+  const face = [
     [0.1, 0.1, 0.02, -0.11, 0.27, 0.255, '#ffffff'], [0.1, 0.1, 0.02, 0.11, 0.27, 0.255, '#ffffff'],
     [0.06, 0.07, 0.021, -0.1, 0.26, 0.262, '#2a4a8a'], [0.06, 0.07, 0.021, 0.12, 0.26, 0.262, '#2a4a8a'],
     [0.06, 0.05, 0.03, 0, 0.19, 0.262, '#d9976f'],      // nose
     [0.14, 0.035, 0.02, 0, 0.1, 0.255, '#b04a3e'], [0.035, 0.035, 0.02, -0.085, 0.118, 0.255, '#b04a3e'], [0.035, 0.035, 0.02, 0.085, 0.118, 0.255, '#b04a3e'], // smile
-  ]); head.position.y = NY;
+  ];
+  const top = [0.52, 0.14, 0.52, 0, 0.47, 0, hair], fringe = [0.5, 0.08, 0.06, 0, 0.42, 0.24, hair];
+  const sides = (y0, y1, z0 = -0.26, z1 = 0.18) => [[0.08, y1 - y0, z1 - z0, -0.235, (y0 + y1) / 2, (z0 + z1) / 2, hair], [0.08, y1 - y0, z1 - z0, 0.235, (y0 + y1) / 2, (z0 + z1) / 2, hair]];
+  const backPanel = y0 => [0.52, 0.52 - y0, 0.08, 0, (y0 + 0.52) / 2, -0.235, hair];
+  const locks = () => [[0.075, 0.36, 0.03, -0.2175, 0.22, 0.255, hair], [0.075, 0.36, 0.03, 0.2175, 0.22, 0.255, hair]]; // hair framing the face
+  if (st === 'long') {
+    head.push(top, fringe, backPanel(0.02), ...sides(0.02, 0.5, -0.26, 0.24), ...locks());
+    back.push([0.5, 0.42, 0.09, 0, 1.2, -0.225, hair], [0.3, 0.06, 0.09, 0, 0.965, -0.225, hair], // down the back, past the shoulders
+      [0.02, 0.3, 0.004, -0.12, 1.15, -0.271, hair2], [0.02, 0.3, 0.004, 0.12, 1.15, -0.271, hair2]); // soft strand lines
+    bodyParts.push([0.1, 0.22, 0.04, -0.2, 1.27, 0.175, hair], [0.1, 0.22, 0.04, 0.2, 1.27, 0.175, hair]); // over the shoulders in front
+  } else if (st === 'ponytail') {
+    head.push(top, fringe, backPanel(0.1), ...sides(0.16, 0.5),
+      [0.16, 0.12, 0.12, 0, 0.5, -0.3, tie],            // hair tie, high on the back of the head
+      [0.14, 0.12, 0.14, 0, 0.56, -0.38, hair],         // the ponytail springs up and back (peeks over the head from the front)
+      [0.13, 0.52, 0.12, 0, 0.26, -0.42, hair],         // then hangs down
+      [0.1, 0.08, 0.09, 0, -0.03, -0.42, hair2]);       // tip
+  } else if (st === 'pigtails') {
+    head.push(top, fringe, backPanel(0.14), ...sides(0.2, 0.5), [0.02, 0.14, 0.02, 0, 0.47, 0.262, hair2]); // center part
+    for (const s of [-1, 1]) head.push( // high pigtails that stand out from the head (and stay clear of the shoulders)
+      [0.1, 0.1, 0.13, s * 0.32, 0.45, -0.08, tie],
+      [0.11, 0.12, 0.13, s * 0.36, 0.36, -0.08, hair], [0.14, 0.16, 0.15, s * 0.385, 0.22, -0.08, hair], [0.1, 0.08, 0.11, s * 0.395, 0.1, -0.08, hair2]);
+  } else if (st === 'braids') {
+    head.push(top, fringe, backPanel(0.06), ...sides(0.02, 0.5, -0.26, 0.24), ...locks(), [0.02, 0.14, 0.02, 0, 0.47, 0.262, hair2]);
+    for (const s of [-1, 1]) bodyParts.push( // two braids resting on the front of the shoulders
+      [0.1, 0.08, 0.04, s * 0.2, 1.33, 0.175, hair], [0.1, 0.08, 0.04, s * 0.21, 1.25, 0.175, hair2], [0.1, 0.08, 0.04, s * 0.2, 1.17, 0.175, hair],
+      [0.09, 0.04, 0.045, s * 0.2, 1.11, 0.175, tie], [0.07, 0.05, 0.035, s * 0.2, 1.065, 0.175, hair]);
+  } else if (st === 'puffs') {
+    head.push([0.52, 0.12, 0.52, 0, 0.46, 0, hair], [0.5, 0.06, 0.06, 0, 0.43, 0.24, hair], backPanel(0.1), ...sides(0.26, 0.5),
+      [0.26, 0.24, 0.26, -0.2, 0.6, -0.02, hair], [0.26, 0.24, 0.26, 0.2, 0.6, -0.02, hair]); // two round puffs
+    for (const s of [-1, 1]) head.push( // curly texture
+      [0.05, 0.05, 0.02, s * 0.14, 0.64, 0.115, hair2], [0.05, 0.05, 0.02, s * 0.26, 0.55, 0.115, hair2], [0.06, 0.02, 0.06, s * 0.2, 0.725, 0.0, hair2],
+      [0.02, 0.05, 0.05, s * 0.335, 0.62, -0.06, hair2], [0.05, 0.05, 0.02, s * 0.2, 0.52, -0.155, hair2]);
+  } else {
+    head.push(top, [0.52, 0.44, 0.08, 0, 0.29, -0.23, hair], [0.08, 0.26, 0.44, -0.235, 0.35, -0.03, hair], [0.08, 0.26, 0.44, 0.235, 0.35, -0.03, hair], fringe);
+  }
+  // ---- accessory ----
+  const bowAt = (x, y, z, s = 1) => head.push([0.12 * s, 0.12 * s, 0.06, x - 0.09 * s, y, z, BOW_COLOR], [0.12 * s, 0.12 * s, 0.06, x + 0.09 * s, y, z, BOW_COLOR], [0.06 * s, 0.08 * s, 0.075, x, y, z, bow2]);
+  if (L.acc === 'headband') {
+    const hb = darker(shirt, 1.12), z = st === 'puffs' ? 0.17 : 0.08;
+    head.push([0.56, 0.03, 0.1, 0, 0.557, z, hb], [0.03, 0.26, 0.1, -0.283, 0.43, z, hb], [0.03, 0.26, 0.1, 0.283, 0.43, z, hb]);
+  } else if (L.acc === 'bow') {
+    if (st === 'puffs') bowAt(0, 0.6, 0.145, 0.8);
+    else if (st === 'ponytail') head.push([0.14, 0.13, 0.06, -0.12, 0.5, -0.365, BOW_COLOR], [0.14, 0.13, 0.06, 0.12, 0.5, -0.365, BOW_COLOR], [0.08, 0.09, 0.07, 0, 0.5, -0.365, bow2]);
+    else if (st === 'pigtails') for (const s of [-1, 1]) head.push([0.08, 0.11, 0.11, s * 0.335, 0.45, 0.025, BOW_COLOR], [0.08, 0.11, 0.11, s * 0.335, 0.45, -0.185, BOW_COLOR], [0.1, 0.08, 0.08, s * 0.335, 0.45, -0.08, bow2]);
+    else bowAt(0.15, 0.605, 0.05);
+  }
+  head.push(...face); // face details last, so they sit on top (see DETAIL_EPS)
+  const body = mergeBoxes(bodyParts);
+  const headM = mergeBoxes(head); headM.position.y = NY;
+  rig.add(body, headM);
+  if (back.length) { const hb = mergeBoxes(back); hb.material = hairBackMat; rig.add(hb); }
   const armGeo = [[0.18, 0.24, 0.2, 0, -0.1, 0, shirt], [0.16, 0.42, 0.18, 0, -0.42, 0, skin]];
   const armL = mergeBoxes(armGeo), armR = mergeBoxes(armGeo); armL.position.set(-0.36, 1.34, 0); armR.position.set(0.36, 1.34, 0);
-  const legGeo = [[0.24, 0.58, 0.26, 0, -0.29, 0, jeans], [0.25, 0.12, 0.32, 0, -0.64, 0.03, shoe]];
+  const legGeo = dress ? [[0.24, 0.58, 0.26, 0, -0.29, 0, skin], [0.245, 0.1, 0.265, 0, -0.53, 0, '#ffffff'], [0.25, 0.12, 0.32, 0, -0.64, 0.03, shoe]]
+    : [[0.24, 0.58, 0.26, 0, -0.29, 0, jeans], [0.25, 0.12, 0.32, 0, -0.64, 0.03, shoe]];
   const legL = mergeBoxes(legGeo), legR = mergeBoxes(legGeo); legL.position.set(-0.13, 0.7, 0); legR.position.set(0.13, 0.7, 0);
-  rig.add(body, head, armL, armR, legL, legR);
-  grp.userData = { rig, head, armL, armR, legL, legR };
+  rig.add(armL, armR, legL, legR);
+  grp.userData = { rig, head: headM, armL, armR, legL, legR, legSwing: dress ? 0.6 : 1 }; // smaller steps keep legs inside the skirt
   return grp;
 }
